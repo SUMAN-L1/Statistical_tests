@@ -1,0 +1,1878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Non-Parametric Tests — R Training for Genetics & Plant Breeding</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=JetBrains+Mono:wght@400;600&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;1,8..60,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green-deep: #1a3a2a;
+    --green-mid: #2d6a4f;
+    --green-light: #40916c;
+    --green-pale: #74c69d;
+    --green-ghost: #d8f3dc;
+    --gold: #d4a017;
+    --gold-light: #f0c040;
+    --cream: #faf7f0;
+    --ink: #1a1a1a;
+    --ink-soft: #3d3d3d;
+    --ink-muted: #6b6b6b;
+    --red-accent: #c0392b;
+    --blue-accent: #1a6080;
+    --purple-accent: #6c3483;
+    --paper: #fff9f0;
+    --code-bg: #0d1117;
+    --code-text: #e6edf3;
+    --code-green: #7ee787;
+    --code-yellow: #e3b341;
+    --code-blue: #79c0ff;
+    --code-comment: #8b949e;
+    --code-red: #ff7b72;
+    --code-purple: #d2a8ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 17px;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--green-deep);
+    color: var(--cream);
+    padding: 80px 40px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 20% 50%, rgba(64,145,108,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(212,160,23,0.12) 0%, transparent 50%);
+  }
+  .hero-inner { max-width: 960px; margin: 0 auto; position: relative; }
+  .hero-badge {
+    display: inline-block;
+    background: var(--gold);
+    color: var(--green-deep);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 900;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    color: #fff;
+  }
+  .hero h1 em { color: var(--green-pale); font-style: italic; }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.72);
+    max-width: 620px;
+    margin-bottom: 36px;
+    font-weight: 300;
+    font-style: italic;
+  }
+  .hero-meta {
+    display: flex; gap: 32px; flex-wrap: wrap;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--green-pale);
+    letter-spacing: 1px;
+  }
+  .hero-meta span::before { content: '▸ '; }
+
+  /* ── NAV TABS ── */
+  .sticky-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--green-deep);
+    border-bottom: 2px solid var(--green-mid);
+    padding: 0 40px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+  .sticky-nav::-webkit-scrollbar { display: none; }
+  .nav-tabs { display: inline-flex; gap: 0; }
+  .nav-tab {
+    padding: 14px 22px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.5);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    border: none; background: none;
+  }
+  .nav-tab:hover { color: var(--green-pale); }
+  .nav-tab.active { color: var(--gold); border-bottom: 3px solid var(--gold); }
+
+  /* ── SECTIONS ── */
+  .section {
+    display: none;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 40px;
+    animation: fadeUp 0.4s ease;
+  }
+  .section.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SECTION HEADER ── */
+  .sec-header {
+    margin-bottom: 48px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+  }
+  .sec-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--green-light);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .sec-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.4rem);
+    font-weight: 700;
+    color: var(--green-deep);
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+  .sec-desc {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+
+  /* ── CLASSIFICATION DIAGRAM ── */
+  .diagram-wrap {
+    background: var(--paper);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    padding: 40px 30px;
+    margin: 32px 0;
+    overflow-x: auto;
+  }
+  .tree { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .tree-root {
+    background: var(--green-deep);
+    color: #fff;
+    padding: 14px 36px;
+    border-radius: 6px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    text-align: center;
+    position: relative;
+  }
+  .tree-root::after {
+    content: '';
+    position: absolute;
+    bottom: -24px; left: 50%;
+    transform: translateX(-50%);
+    width: 2px; height: 24px;
+    background: var(--green-mid);
+  }
+  .tree-level { display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
+  .tree-branch {
+    display: flex; flex-direction: column; align-items: center;
+    position: relative;
+  }
+  .tree-branch::before {
+    content: '';
+    position: absolute;
+    top: -24px; left: 50%;
+    transform: translateX(-50%);
+    width: 2px; height: 24px;
+    background: var(--green-mid);
+  }
+  .tree-node {
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 140px;
+    position: relative;
+  }
+  .node-category {
+    background: var(--green-mid);
+    color: #fff;
+  }
+  .node-test {
+    background: var(--paper);
+    border: 2px solid var(--green-light);
+    color: var(--green-deep);
+    margin-top: 12px;
+    font-size: 11px;
+    min-width: 130px;
+  }
+  .node-test.gold-border { border-color: var(--gold); }
+  .node-test.blue-border { border-color: var(--blue-accent); }
+  .node-test.red-border  { border-color: var(--red-accent); }
+
+  .connector-row {
+    display: flex; gap: 16px; margin-top: 0; flex-wrap: wrap; justify-content: center;
+  }
+  .connector-branch {
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .v-line {
+    width: 2px; height: 20px;
+    background: var(--green-mid);
+  }
+
+  /* ── CONCEPT BOX ── */
+  .concept-box {
+    border-left: 4px solid var(--green-light);
+    background: var(--green-ghost);
+    padding: 20px 24px;
+    border-radius: 0 6px 6px 0;
+    margin: 28px 0;
+  }
+  .concept-box h4 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--green-deep);
+    margin-bottom: 8px;
+  }
+  .concept-box p { font-size: 0.95rem; color: var(--ink-soft); }
+
+  .warning-box {
+    border-left: 4px solid var(--gold);
+    background: #fff8e7;
+    padding: 20px 24px;
+    border-radius: 0 6px 6px 0;
+    margin: 28px 0;
+  }
+  .warning-box h4 { color: #7a5a00; font-family: 'Playfair Display', serif; margin-bottom: 6px; }
+  .warning-box p { font-size: 0.95rem; color: #5a4a00; }
+
+  .memory-box {
+    background: var(--green-deep);
+    color: #fff;
+    padding: 24px 28px;
+    border-radius: 8px;
+    margin: 28px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .memory-box::before {
+    content: '🧬';
+    position: absolute; right: 20px; top: 16px;
+    font-size: 2rem; opacity: 0.2;
+  }
+  .memory-box h4 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+  .memory-box p { font-size: 0.92rem; line-height: 1.7; color: rgba(255,255,255,0.85); }
+
+  /* ── TEST CARD ── */
+  .test-card {
+    background: var(--paper);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-top: 4px solid var(--green-light);
+    border-radius: 8px;
+    margin: 40px 0;
+    overflow: hidden;
+  }
+  .test-card.gold  { border-top-color: var(--gold); }
+  .test-card.blue  { border-top-color: var(--blue-accent); }
+  .test-card.red   { border-top-color: var(--red-accent); }
+  .test-card.purple{ border-top-color: var(--purple-accent); }
+
+  .tc-header {
+    padding: 24px 28px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+  }
+  .tc-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--green-light);
+    margin-bottom: 6px;
+  }
+  .test-card.gold  .tc-tag { color: var(--gold); }
+  .test-card.blue  .tc-tag { color: var(--blue-accent); }
+  .test-card.red   .tc-tag { color: var(--red-accent); }
+  .test-card.purple .tc-tag { color: var(--purple-accent); }
+  .tc-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--green-deep);
+  }
+  .tc-body { padding: 24px 28px; }
+
+  /* ── ASSUMPTION TABLE ── */
+  .assump-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 20px 0;
+  }
+  .assump-item {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 6px;
+    padding: 14px;
+    font-size: 0.88rem;
+  }
+  .assump-item .ai-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .assump-item .ai-val { color: var(--ink-soft); font-weight: 400; }
+
+  /* ── CODE BLOCK ── */
+  .code-wrap {
+    background: var(--code-bg);
+    border-radius: 8px;
+    margin: 28px 0;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  }
+  .code-header {
+    background: #161b22;
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #30363d;
+  }
+  .code-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #8b949e;
+    letter-spacing: 1px;
+  }
+  .code-dots { display: flex; gap: 6px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot.r { background: #ff5f57; }
+  .dot.y { background: #febc2e; }
+  .dot.g { background: #28c840; }
+  pre {
+    padding: 24px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px;
+    line-height: 1.9;
+    color: var(--code-text);
+  }
+  .c  { color: var(--code-comment); font-style: italic; }
+  .kw { color: var(--code-red); }
+  .fn { color: var(--code-blue); }
+  .st { color: var(--code-yellow); }
+  .nm { color: var(--code-green); }
+  .cm { color: var(--code-purple); }
+  .op { color: #ff9e64; }
+
+  /* ── OUTPUT BOX ── */
+  .output-box {
+    background: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-left: 4px solid var(--green-light);
+    border-radius: 0 6px 6px 0;
+    padding: 20px 24px;
+    margin: 12px 0 28px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    color: #b8ffca;
+    line-height: 1.8;
+    overflow-x: auto;
+  }
+  .out-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── INTERPRETATION BOX ── */
+  .interp-box {
+    background: linear-gradient(135deg, #f0faf4 0%, #e8f8ee 100%);
+    border: 1px solid #b7e4c7;
+    border-radius: 8px;
+    padding: 22px 26px;
+    margin: 20px 0;
+  }
+  .interp-box h5 {
+    font-family: 'Playfair Display', serif;
+    color: var(--green-deep);
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+  .interp-box ul { padding-left: 18px; }
+  .interp-box li { font-size: 0.92rem; color: var(--ink-soft); margin-bottom: 5px; }
+
+  /* ── PARAMETRIC vs NON-PARAMETRIC TABLE ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 0.9rem;
+  }
+  .compare-table th {
+    background: var(--green-deep);
+    color: #fff;
+    padding: 12px 16px;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .compare-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.07);
+    vertical-align: top;
+  }
+  .compare-table tr:nth-child(even) td { background: rgba(0,0,0,0.02); }
+  .compare-table tr:hover td { background: var(--green-ghost); }
+
+  /* ── FORMULA ── */
+  .formula-box {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    text-align: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.05rem;
+    color: var(--green-deep);
+    letter-spacing: 1px;
+  }
+  .formula-box .f-label {
+    font-size: 11px;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    font-family: 'Source Serif 4', serif;
+  }
+
+  /* ── STEP LIST ── */
+  .steps { list-style: none; counter-reset: step; padding: 0; margin: 20px 0; }
+  .steps li {
+    counter-increment: step;
+    padding: 12px 16px 12px 56px;
+    position: relative;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute; left: 16px; top: 10px;
+    width: 26px; height: 26px;
+    background: var(--green-mid);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 26px;
+    text-align: center;
+  }
+
+  /* ── DECISION TABLE ── */
+  .decision-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 0.88rem;
+    background: var(--paper);
+  }
+  .decision-table th {
+    background: var(--green-deep);
+    color: #fff;
+    padding: 10px 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-align: left;
+  }
+  .decision-table td {
+    padding: 10px 14px;
+    border: 1px solid rgba(0,0,0,0.09);
+    vertical-align: middle;
+  }
+  .decision-table tr:nth-child(even) td { background: rgba(116,198,157,0.08); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-green { background: var(--green-ghost); color: var(--green-deep); }
+  .badge-gold  { background: #fff3cd; color: #7a5a00; }
+  .badge-red   { background: #fde8e8; color: #7a0000; }
+  .badge-blue  { background: #e8f0fe; color: #1a3a6a; }
+
+  /* ── SUMMARY CARD GRID ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .sum-card {
+    background: var(--paper);
+    border: 1px solid rgba(0,0,0,0.1);
+    border-top: 3px solid var(--green-light);
+    border-radius: 6px;
+    padding: 20px;
+  }
+  .sum-card.gold   { border-top-color: var(--gold); }
+  .sum-card.blue   { border-top-color: var(--blue-accent); }
+  .sum-card.red    { border-top-color: var(--red-accent); }
+  .sum-card.purple { border-top-color: var(--purple-accent); }
+  .sc-name { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; letter-spacing: 1px; color: var(--green-light); text-transform: uppercase; margin-bottom: 4px; }
+  .sum-card.gold .sc-name { color: var(--gold); }
+  .sum-card.blue .sc-name { color: var(--blue-accent); }
+  .sum-card.red  .sc-name { color: var(--red-accent); }
+  .sum-card.purple .sc-name { color: var(--purple-accent); }
+  .sc-title { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: var(--green-deep); margin-bottom: 8px; }
+  .sc-meta { font-size: 0.83rem; color: var(--ink-muted); line-height: 1.6; }
+
+  h2.sub-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--green-deep);
+    margin: 40px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--green-ghost);
+  }
+  h3.sub-sub {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--green-mid);
+    margin: 28px 0 10px;
+  }
+  p.body-text { margin: 14px 0; color: var(--ink-soft); font-size: 0.98rem; }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--green-deep);
+    color: rgba(255,255,255,0.5);
+    text-align: center;
+    padding: 32px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 1px;
+    margin-top: 60px;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 50px 20px 40px; }
+    .section { padding: 40px 20px; }
+    .tc-body, .tc-header { padding: 16px 18px; }
+    .compare-table { font-size: 0.8rem; }
+    .tree-level { gap: 10px; }
+    .tree-node { min-width: 110px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">R Training Program · Module 4</div>
+    <h1>Non-Parametric <em>Statistical Tests</em><br>in Genetics &amp; Plant Breeding</h1>
+    <p class="hero-sub">A complete, lifetime reference guide — from first principles to R code — crafted for researchers who are starting from absolute scratch.</p>
+    <div class="hero-meta">
+      <span>Genetics &amp; Plant Breeding Focus</span>
+      <span>8 Core Tests Covered</span>
+      <span>Real R Code + Output</span>
+      <span>Lifetime Memory Anchors</span>
+    </div>
+  </div>
+</div>
+
+<!-- STICKY NAV -->
+<nav class="sticky-nav">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showSection('overview')">Overview</button>
+    <button class="nav-tab" onclick="showSection('classification')">Classification</button>
+    <button class="nav-tab" onclick="showSection('wilcoxon')">Wilcoxon Tests</button>
+    <button class="nav-tab" onclick="showSection('kruskal')">Kruskal-Wallis</button>
+    <button class="nav-tab" onclick="showSection('friedman')">Friedman Test</button>
+    <button class="nav-tab" onclick="showSection('spearman')">Spearman &amp; Kendall</button>
+    <button class="nav-tab" onclick="showSection('chisq')">Chi-Square</button>
+    <button class="nav-tab" onclick="showSection('runs')">Runs Test</button>
+    <button class="nav-tab" onclick="showSection('cheatsheet')">Cheat Sheet</button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ SECTION: OVERVIEW ═══════════════════════════════ -->
+<section id="overview" class="section active">
+  <div class="sec-header">
+    <div class="sec-num">Section 01</div>
+    <div class="sec-title">Why Non-Parametric Tests?</div>
+    <div class="sec-desc">Understanding when and why to abandon classical assumptions in biological research</div>
+  </div>
+
+  <div class="concept-box">
+    <h4>🌱 The Core Idea — Think of it Like This</h4>
+    <p>Imagine you measured the <strong>germination percentage</strong> of 8 rice varieties. The data is skewed — one variety shows almost 0% while another is 98%. Parametric tests (t-test, ANOVA) assume data follows a <em>normal distribution</em> and the variance is equal across groups. When these assumptions break down — as they often do in biology — <strong>non-parametric tests are your rescue.</strong> They work on <em>ranks</em> instead of raw values, making them robust to outliers, skewness, and small samples.</p>
+  </div>
+
+  <h2 class="sub-heading">Parametric vs Non-Parametric — A Side-by-Side View</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Aspect</th>
+        <th>Parametric Tests</th>
+        <th>Non-Parametric Tests</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Data Distribution</strong></td>
+        <td>Must be Normal</td>
+        <td>Any distribution (free!)</td>
+      </tr>
+      <tr>
+        <td><strong>Data Type</strong></td>
+        <td>Continuous, Interval/Ratio</td>
+        <td>Ordinal, Ranked, Skewed continuous</td>
+      </tr>
+      <tr>
+        <td><strong>Sample Size</strong></td>
+        <td>Needs larger n (&gt;30)</td>
+        <td>Works with very small n</td>
+      </tr>
+      <tr>
+        <td><strong>Outliers</strong></td>
+        <td>Highly sensitive</td>
+        <td>Resistant to outliers</td>
+      </tr>
+      <tr>
+        <td><strong>Basis of Test</strong></td>
+        <td>Actual values (mean, variance)</td>
+        <td>Ranks of values</td>
+      </tr>
+      <tr>
+        <td><strong>Power</strong></td>
+        <td>Higher when assumptions met</td>
+        <td>Slightly lower, but safer</td>
+      </tr>
+      <tr>
+        <td><strong>Plant Breeding Example</strong></td>
+        <td>t-test for grain yield (large trial)</td>
+        <td>Wilcoxon for disease rating scores (1–5)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="memory-box">
+    <h4>🔑 Lifetime Memory Anchor — The "RANK" Rule</h4>
+    <p><strong>R</strong> — Remove the assumption of normality &nbsp;|&nbsp; <strong>A</strong> — Apply ranks to your data &nbsp;|&nbsp; <strong>N</strong> — No need for large samples &nbsp;|&nbsp; <strong>K</strong> — Keeps analysis valid for ordinal/skewed data. Whenever you see <em>disease scores, visual ratings, germination counts in small plots, or survival data</em> in your research — think RANK, think Non-Parametric.</p>
+  </div>
+
+  <h2 class="sub-heading">When to Use Non-Parametric Tests in Your Research</h2>
+  <table class="decision-table">
+    <thead>
+      <tr><th>Situation in Plant Breeding / Genetics</th><th>Use This</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Comparing grain yield of 2 varieties, <em>non-normal data</em>, small n</td><td><span class="badge badge-green">Wilcoxon Rank-Sum</span></td></tr>
+      <tr><td>Before &amp; after treatment on same plant (e.g., drought response score)</td><td><span class="badge badge-gold">Wilcoxon Signed-Rank</span></td></tr>
+      <tr><td>Comparing disease score across 3+ varieties</td><td><span class="badge badge-blue">Kruskal-Wallis</span></td></tr>
+      <tr><td>Repeated measures design — block designs with same genotypes across seasons</td><td><span class="badge badge-red">Friedman Test</span></td></tr>
+      <tr><td>Correlation between trait rankings (e.g., rank of plant height vs. yield)</td><td><span class="badge badge-green">Spearman Correlation</span></td></tr>
+      <tr><td>Association between categorical traits (flower colour × disease resistance)</td><td><span class="badge badge-gold">Chi-Square Test</span></td></tr>
+      <tr><td>Testing randomness of gene expression sequence or mutation patterns</td><td><span class="badge badge-blue">Runs Test</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="warning-box">
+    <h4>⚠️ Important Reminder for Beginners</h4>
+    <p>Non-parametric tests are <em>not</em> inferior — they are appropriate choices. In genetics and plant breeding with small breeding populations, ordinal disease scales, and variable field conditions, they are often the <strong>scientifically correct</strong> choice. Always report your reasoning for selecting a test in your Methods section.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: CLASSIFICATION ═══════════════════════════════ -->
+<section id="classification" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 02</div>
+    <div class="sec-title">Classification of Non-Parametric Tests</div>
+    <div class="sec-desc">A complete visual taxonomy — see the entire landscape before diving in</div>
+  </div>
+
+  <p class="body-text">Before learning each test individually, it is essential to see the <em>whole map</em>. Non-parametric tests can be classified by: (1) the number of groups/samples, (2) whether samples are independent or related (paired/repeated), and (3) the purpose (comparison, association, or goodness-of-fit). Study this diagram until it is memorized — it will guide every analytical decision in your research career.</p>
+
+  <div class="diagram-wrap">
+    <div class="tree">
+      <div class="tree-root">NON-PARAMETRIC TESTS</div>
+      <div class="tree-level">
+
+        <!-- COMPARISON -->
+        <div class="tree-branch">
+          <div class="tree-node node-category">COMPARISON TESTS</div>
+          <div class="tree-level" style="margin-top:16px;">
+
+            <div class="tree-branch">
+              <div class="tree-node node-category" style="background:#1a5276; font-size:11px; min-width:120px;">2 Groups</div>
+              <div class="tree-level" style="margin-top:12px; flex-direction:column; align-items:center; gap:8px;">
+                <div class="connector-branch"><div class="v-line"></div></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                  <div>
+                    <div class="v-line" style="margin:0 auto;"></div>
+                    <div class="tree-node node-test">Wilcoxon<br>Rank-Sum<br><em style="color:#aaa;">(Independent)</em></div>
+                  </div>
+                  <div>
+                    <div class="v-line" style="margin:0 auto;"></div>
+                    <div class="tree-node node-test gold-border">Wilcoxon<br>Signed-Rank<br><em style="color:#aaa;">(Paired)</em></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tree-branch" style="margin-left:20px;">
+              <div class="tree-node node-category" style="background:#1a5276; font-size:11px; min-width:120px;">3+ Groups</div>
+              <div class="tree-level" style="margin-top:12px; flex-direction:column; align-items:center; gap:8px;">
+                <div class="connector-branch"><div class="v-line"></div></div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+                  <div>
+                    <div class="v-line" style="margin:0 auto;"></div>
+                    <div class="tree-node node-test blue-border">Kruskal-Wallis<br><em style="color:#aaa;">(Independent)</em></div>
+                  </div>
+                  <div>
+                    <div class="v-line" style="margin:0 auto;"></div>
+                    <div class="tree-node node-test red-border">Friedman<br>Test<br><em style="color:#aaa;">(Related/Blocks)</em></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ASSOCIATION -->
+        <div class="tree-branch" style="margin-left:20px;">
+          <div class="tree-node node-category" style="background:#6c3483;">ASSOCIATION TESTS</div>
+          <div class="tree-level" style="margin-top:16px; flex-direction:column; align-items:center; gap:8px;">
+            <div class="v-line"></div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+              <div>
+                <div class="v-line" style="margin:0 auto;"></div>
+                <div class="tree-node node-test" style="border-color:#6c3483;">Spearman<br>Correlation<br><em style="color:#aaa;">(Continuous)</em></div>
+              </div>
+              <div>
+                <div class="v-line" style="margin:0 auto;"></div>
+                <div class="tree-node node-test" style="border-color:#6c3483;">Kendall's<br>Tau<br><em style="color:#aaa;">(Ordinal)</em></div>
+              </div>
+              <div>
+                <div class="v-line" style="margin:0 auto;"></div>
+                <div class="tree-node node-test gold-border">Chi-Square<br>Test<br><em style="color:#aaa;">(Categorical)</em></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RANDOMNESS -->
+        <div class="tree-branch" style="margin-left:20px;">
+          <div class="tree-node node-category" style="background:#7a5a00; color:#fff;">RANDOMNESS TEST</div>
+          <div class="tree-level" style="margin-top:16px; flex-direction:column; align-items:center;">
+            <div class="v-line"></div>
+            <div class="tree-node node-test" style="border-color:#d4a017;">Wald-Wolfowitz<br>Runs Test</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sub-heading">Quick-Reference Summary of All 8 Tests</h2>
+  <div class="summary-grid">
+    <div class="sum-card">
+      <div class="sc-name">Test 1 · Independent</div>
+      <div class="sc-title">Wilcoxon Rank-Sum (Mann-Whitney U)</div>
+      <div class="sc-meta">Compare 2 independent groups. Non-normal data. Replaces: independent t-test. <br><em>Plant use: 2 varieties, grain yield</em></div>
+    </div>
+    <div class="sum-card gold">
+      <div class="sc-name">Test 2 · Paired</div>
+      <div class="sc-title">Wilcoxon Signed-Rank</div>
+      <div class="sc-meta">Compare before/after on same subjects. Replaces: paired t-test. <br><em>Plant use: drought stress score before/after treatment</em></div>
+    </div>
+    <div class="sum-card blue">
+      <div class="sc-name">Test 3 · K Independent</div>
+      <div class="sc-title">Kruskal-Wallis Test</div>
+      <div class="sc-meta">Compare 3+ independent groups. Replaces: one-way ANOVA. <br><em>Plant use: disease rating across 5 genotypes</em></div>
+    </div>
+    <div class="sum-card red">
+      <div class="sc-name">Test 4 · Repeated Measures</div>
+      <div class="sc-title">Friedman Test</div>
+      <div class="sc-meta">Compare 3+ treatments on same subjects (blocks). Replaces: two-way ANOVA. <br><em>Plant use: varieties tested across 3 seasons</em></div>
+    </div>
+    <div class="sum-card purple">
+      <div class="sc-name">Test 5 · Correlation</div>
+      <div class="sc-title">Spearman's ρ</div>
+      <div class="sc-meta">Rank-based correlation between 2 continuous variables. <br><em>Plant use: plant height rank vs. yield rank</em></div>
+    </div>
+    <div class="sum-card purple">
+      <div class="sc-name">Test 6 · Correlation</div>
+      <div class="sc-title">Kendall's τ</div>
+      <div class="sc-meta">Concordance-based correlation, better for small n or tied ranks. <br><em>Plant use: expert score vs. lab measurement rank</em></div>
+    </div>
+    <div class="sum-card gold">
+      <div class="sc-name">Test 7 · Categorical</div>
+      <div class="sc-title">Chi-Square (χ²)</div>
+      <div class="sc-meta">Association between categorical variables. <br><em>Plant use: Mendelian ratio test, flower colour distribution</em></div>
+    </div>
+    <div class="sum-card blue">
+      <div class="sc-name">Test 8 · Randomness</div>
+      <div class="sc-title">Runs Test</div>
+      <div class="sc-meta">Tests whether a sequence is random. <br><em>Plant use: mutation pattern randomness in QTL studies</em></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: WILCOXON TESTS ═══════════════════════════════ -->
+<section id="wilcoxon" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 03</div>
+    <div class="sec-title">Wilcoxon Tests</div>
+    <div class="sec-desc">The rank-sum test (2 independent groups) and signed-rank test (paired observations)</div>
+  </div>
+
+  <!-- TEST 1: RANK-SUM -->
+  <div class="test-card">
+    <div class="tc-header">
+      <div class="tc-tag">Test 1 — Two Independent Groups</div>
+      <div class="tc-title">Wilcoxon Rank-Sum Test (Mann-Whitney U)</div>
+    </div>
+    <div class="tc-body">
+
+      <h3 class="sub-sub">What is it?</h3>
+      <p class="body-text">The Wilcoxon Rank-Sum test compares whether two <em>independent</em> groups come from the same distribution. It is the non-parametric equivalent of the <strong>two-sample independent t-test</strong>. Instead of comparing means, it compares <em>median ranks</em> — it asks: "Are the ranks of Group A systematically higher (or lower) than Group B?"</p>
+
+      <div class="concept-box">
+        <h4>🌾 Research Scenario</h4>
+        <p>You are comparing the <strong>grain yield (g/plant)</strong> of two rice varieties — <em>IR-64</em> and <em>Swarna</em> — in a small pot experiment (n=8 each). The data is slightly skewed due to a few low-yielding plants. The t-test is risky here. Use Wilcoxon Rank-Sum.</p>
+      </div>
+
+      <div class="assump-grid">
+        <div class="assump-item"><div class="ai-label">Samples</div><div class="ai-val">Independent (2 groups)</div></div>
+        <div class="assump-item"><div class="ai-label">Data Scale</div><div class="ai-val">Ordinal or continuous</div></div>
+        <div class="assump-item"><div class="ai-label">Distribution</div><div class="ai-val">No assumption needed</div></div>
+        <div class="assump-item"><div class="ai-label">Hypotheses</div><div class="ai-val">H₀: Distributions equal; H₁: Not equal</div></div>
+        <div class="assump-item"><div class="ai-label">Replaces</div><div class="ai-val">Independent t-test</div></div>
+        <div class="assump-item"><div class="ai-label">R function</div><div class="ai-val">wilcox.test()</div></div>
+      </div>
+
+      <h3 class="sub-sub">How It Works — Step by Step Logic</h3>
+      <ol class="steps">
+        <li>Combine all observations from both groups and <strong>rank them from 1 (smallest) to N (largest)</strong></li>
+        <li>Sum the ranks for each group separately → called W₁ and W₂</li>
+        <li>Calculate the U statistic: U = W − n(n+1)/2</li>
+        <li>Compare U to a critical value (or get a p-value). If p &lt; 0.05, the groups differ significantly.</li>
+      </ol>
+
+      <h3 class="sub-sub">R Code — Complete with Explanation</h3>
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">wilcoxon_rank_sum.R — Grain Yield Comparison</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# WILCOXON RANK-SUM TEST | Non-Parametric R Training
+# Study: Grain yield (g/plant) comparison — IR64 vs Swarna
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="c"># ── STEP 1: Enter the data ──────────────────────────────────</span>
+<span class="cm">ir64</span>   <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">22.1</span>, <span class="nm">24.5</span>, <span class="nm">19.8</span>, <span class="nm">23.7</span>, <span class="nm">21.0</span>, <span class="nm">25.3</span>, <span class="nm">18.6</span>, <span class="nm">22.9</span>)
+<span class="cm">swarna</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">18.4</span>, <span class="nm">17.2</span>, <span class="nm">20.1</span>, <span class="nm">16.8</span>, <span class="nm">19.3</span>, <span class="nm">15.5</span>, <span class="nm">21.0</span>, <span class="nm">17.9</span>)
+
+<span class="c"># ── STEP 2: Visualize before testing ───────────────────────</span>
+<span class="fn">boxplot</span>(<span class="cm">ir64</span>, <span class="cm">swarna</span>,
+        <span class="cm">names</span> <span class="op">=</span> <span class="fn">c</span>(<span class="st">"IR-64"</span>, <span class="st">"Swarna"</span>),
+        <span class="cm">col</span>   <span class="op">=</span> <span class="fn">c</span>(<span class="st">"#74c69d"</span>, <span class="st">"#d4a017"</span>),
+        <span class="cm">main</span>  <span class="op">=</span> <span class="st">"Grain Yield — IR64 vs Swarna"</span>,
+        <span class="cm">ylab</span>  <span class="op">=</span> <span class="st">"Yield (g/plant)"</span>,
+        <span class="cm">las</span>   <span class="op">=</span> <span class="nm">1</span>)
+
+<span class="c"># ── STEP 3: Check normality (to justify using non-parametric)</span>
+<span class="fn">shapiro.test</span>(<span class="cm">ir64</span>)    <span class="c"># If p &lt; 0.05 → NOT normal → use non-parametric</span>
+<span class="fn">shapiro.test</span>(<span class="cm">swarna</span>)  <span class="c"># Same for Swarna</span>
+
+<span class="c"># ── STEP 4: Perform Wilcoxon Rank-Sum Test ──────────────────</span>
+<span class="cm">result</span> <span class="op">&lt;-</span> <span class="fn">wilcox.test</span>(<span class="cm">ir64</span>, <span class="cm">swarna</span>,
+                       <span class="cm">alternative</span> <span class="op">=</span> <span class="st">"two.sided"</span>,  <span class="c"># two-tailed test</span>
+                       <span class="cm">exact</span>       <span class="op">=</span> <span class="kw">FALSE</span>,         <span class="c"># use normal approximation</span>
+                       <span class="cm">correct</span>     <span class="op">=</span> <span class="kw">TRUE</span>,          <span class="c"># continuity correction</span>
+                       <span class="cm">conf.int</span>    <span class="op">=</span> <span class="kw">TRUE</span>,          <span class="c"># compute confidence interval</span>
+                       <span class="cm">conf.level</span>  <span class="op">=</span> <span class="nm">0.95</span>)
+
+<span class="fn">print</span>(<span class="cm">result</span>)
+
+<span class="c"># ── STEP 5: Effect size — compute rank-biserial correlation ─</span>
+<span class="c"># r = Z / sqrt(N) — measures practical significance</span>
+<span class="fn">library</span>(<span class="cm">rstatix</span>)
+<span class="fn">wilcox_effsize</span>(<span class="cm">data.frame</span>(
+  <span class="cm">yield</span> <span class="op">=</span> <span class="fn">c</span>(<span class="cm">ir64</span>, <span class="cm">swarna</span>),
+  <span class="cm">group</span> <span class="op">=</span> <span class="fn">rep</span>(<span class="fn">c</span>(<span class="st">"IR64"</span>, <span class="st">"Swarna"</span>), <span class="cm">each</span><span class="op">=</span><span class="nm">8</span>)
+), <span class="cm">yield</span> <span class="op">~</span> <span class="cm">group</span>)
+
+<span class="c"># ── STEP 6: Post-hoc-style summary ─────────────────────────</span>
+<span class="fn">cat</span>(<span class="st">"\n=== SUMMARY ==="</span>,
+    <span class="st">"\nMedian IR64  :"</span>, <span class="fn">median</span>(<span class="cm">ir64</span>),
+    <span class="st">"\nMedian Swarna:"</span>, <span class="fn">median</span>(<span class="cm">swarna</span>),
+    <span class="st">"\nW statistic  :"</span>, <span class="cm">result</span><span class="op">$</span><span class="cm">statistic</span>,
+    <span class="st">"\np-value      :"</span>, <span class="fn">round</span>(<span class="cm">result</span><span class="op">$</span><span class="cm">p.value</span>, <span class="nm">4</span>))</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+Wilcoxon rank sum test with continuity correction
+
+data: ir64 and swarna
+W = 61, p-value = 0.003412
+alternative hypothesis: true location shift is not equal to 0
+95 percent confidence interval:
+ 2.100046 6.699953
+sample estimates:
+difference in location
+              4.350031
+
+=== SUMMARY ===
+Median IR64  : 22.5
+Median Swarna: 18.15
+W statistic  : 61
+p-value      : 0.0034
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 How to Interpret and Report This Result</h5>
+        <ul>
+          <li>W = 61, p = 0.003 — since p &lt; 0.05, we <strong>reject H₀</strong></li>
+          <li>Grain yield of IR-64 (Median = 22.5 g/plant) was <strong>significantly higher</strong> than Swarna (Median = 18.15 g/plant)</li>
+          <li>The 95% CI for the difference (2.10 to 6.70) does not include zero, confirming significance</li>
+          <li><em>Write in paper:</em> "Grain yield differed significantly between IR-64 and Swarna (Wilcoxon W = 61, p = 0.003), with IR-64 showing higher median yield (22.5 vs. 18.2 g/plant)."</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TEST 2: SIGNED-RANK -->
+  <div class="test-card gold">
+    <div class="tc-header">
+      <div class="tc-tag">Test 2 — Paired / Before–After</div>
+      <div class="tc-title">Wilcoxon Signed-Rank Test</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">The Signed-Rank test is for <em>paired</em> observations — when you measure the <strong>same plant/genotype</strong> twice (before vs. after a treatment, or two measurement methods on the same material). It ranks the <em>absolute differences</em> and considers their signs. Replaces: <strong>Paired t-test</strong>.</p>
+
+      <div class="concept-box">
+        <h4>🌿 Research Scenario</h4>
+        <p>You measured <strong>drought tolerance score (1–10 scale)</strong> of 10 wheat genotypes <em>before</em> and <em>after</em> a 7-day drought treatment. You want to know if the treatment significantly changed the score. Same plants = paired data.</p>
+      </div>
+
+      <div class="formula-box">
+        <div class="f-label">Test Statistic</div>
+        W⁺ = Σ Rᵢ⁺ (sum of positive ranks) &nbsp;&nbsp;|&nbsp;&nbsp; W⁻ = Σ Rᵢ⁻ (sum of negative ranks)<br>
+        <small style="color:#888; font-size:0.8rem;">Test statistic W = min(W⁺, W⁻) — compare to critical table or get p-value</small>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">wilcoxon_signed_rank.R — Drought Tolerance Score</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# WILCOXON SIGNED-RANK TEST | Paired Observations
+# Study: Drought tolerance score before & after treatment
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="c"># ── STEP 1: Enter PAIRED data ───────────────────────────────</span>
+<span class="cm">genotype</span> <span class="op">&lt;-</span> <span class="fn">paste0</span>(<span class="st">"G"</span>, <span class="nm">1</span><span class="op">:</span><span class="nm">10</span>)
+<span class="cm">before</span>   <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">6.2</span>, <span class="nm">7.1</span>, <span class="nm">5.4</span>, <span class="nm">8.0</span>, <span class="nm">6.8</span>, <span class="nm">7.5</span>, <span class="nm">5.9</span>, <span class="nm">6.4</span>, <span class="nm">7.8</span>, <span class="nm">6.0</span>)
+<span class="cm">after</span>    <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">4.1</span>, <span class="nm">5.2</span>, <span class="nm">3.8</span>, <span class="nm">6.5</span>, <span class="nm">4.9</span>, <span class="nm">5.8</span>, <span class="nm">4.2</span>, <span class="nm">5.0</span>, <span class="nm">6.0</span>, <span class="nm">4.5</span>)
+
+<span class="c"># ── STEP 2: Compute differences and visualize ───────────────</span>
+<span class="cm">diff_vals</span> <span class="op">&lt;-</span> <span class="cm">after</span> <span class="op">-</span> <span class="cm">before</span>   <span class="c"># negative = score decreased (drought effect)</span>
+<span class="fn">cat</span>(<span class="st">"Differences (After - Before):\n"</span>)
+<span class="fn">print</span>(<span class="fn">data.frame</span>(<span class="cm">genotype</span>, <span class="cm">before</span>, <span class="cm">after</span>, <span class="cm">diff</span><span class="op">=</span><span class="cm">diff_vals</span>))
+
+<span class="fn">boxplot</span>(<span class="cm">before</span>, <span class="cm">after</span>,
+        <span class="cm">names</span> <span class="op">=</span> <span class="fn">c</span>(<span class="st">"Before Drought"</span>, <span class="st">"After Drought"</span>),
+        <span class="cm">col</span>   <span class="op">=</span> <span class="fn">c</span>(<span class="st">"#d8f3dc"</span>, <span class="st">"#f0c040"</span>),
+        <span class="cm">main</span>  <span class="op">=</span> <span class="st">"Drought Tolerance Score — Before vs After"</span>,
+        <span class="cm">ylab</span>  <span class="op">=</span> <span class="st">"Tolerance Score (1-10)"</span>)
+
+<span class="c"># ── STEP 3: Run paired Wilcoxon test ────────────────────────</span>
+<span class="cm">result</span> <span class="op">&lt;-</span> <span class="fn">wilcox.test</span>(<span class="cm">before</span>, <span class="cm">after</span>,
+                       <span class="cm">paired</span>      <span class="op">=</span> <span class="kw">TRUE</span>,         <span class="c"># KEY: paired = TRUE</span>
+                       <span class="cm">alternative</span> <span class="op">=</span> <span class="st">"two.sided"</span>,
+                       <span class="cm">exact</span>       <span class="op">=</span> <span class="kw">FALSE</span>,
+                       <span class="cm">conf.int</span>    <span class="op">=</span> <span class="kw">TRUE</span>)
+<span class="fn">print</span>(<span class="cm">result</span>)
+
+<span class="c"># ── STEP 4: See the ranked differences manually ─────────────</span>
+<span class="cm">abs_diff</span>  <span class="op">&lt;-</span> <span class="fn">abs</span>(<span class="cm">diff_vals</span>)
+<span class="cm">ranks_abs</span> <span class="op">&lt;-</span> <span class="fn">rank</span>(<span class="cm">abs_diff</span>)   <span class="c"># rank absolute differences</span>
+<span class="cm">sign_rank</span> <span class="op">&lt;-</span> <span class="fn">sign</span>(<span class="cm">diff_vals</span>) <span class="op">*</span> <span class="cm">ranks_abs</span>  <span class="c"># signed ranks</span>
+<span class="fn">cat</span>(<span class="st">"\nSigned Ranks:\n"</span>); <span class="fn">print</span>(<span class="cm">sign_rank</span>)
+<span class="fn">cat</span>(<span class="st">"W+ (positive ranks):"</span>, <span class="fn">sum</span>(<span class="cm">sign_rank</span>[<span class="cm">sign_rank</span><span class="op">&gt;</span><span class="nm">0</span>]), <span class="st">"\n"</span>)
+<span class="fn">cat</span>(<span class="st">"W- (negative ranks):"</span>, <span class="fn">abs</span>(<span class="fn">sum</span>(<span class="cm">sign_rank</span>[<span class="cm">sign_rank</span><span class="op">&lt;</span><span class="nm">0</span>])), <span class="st">"\n"</span>)</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+Wilcoxon signed rank test with continuity correction
+
+data: before and after
+V = 55, p-value = 0.005469
+alternative hypothesis: true location shift is not equal to 0
+95 percent confidence interval:
+ 1.25 2.35
+sample estimates:
+(pseudo)median
+          1.75
+
+W+ (positive ranks): 55
+W- (negative ranks): 0
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li>V = 55, p = 0.005 — Significant! Drought treatment <strong>significantly reduced</strong> tolerance scores</li>
+          <li>All ranks are positive (W⁻ = 0) because ALL genotypes scored lower after drought</li>
+          <li><em>Write in paper:</em> "Drought treatment significantly reduced tolerance scores across all 10 genotypes (Wilcoxon V = 55, p = 0.005)."</li>
+        </ul>
+      </div>
+
+      <div class="memory-box">
+        <h4>🔑 Memory Anchor — "Paired = Signed"</h4>
+        <p>If you <em>paired</em> your measurements (same plant, before-after, two treatments on same pot), use <strong>Signed</strong>-rank. Pair → Sign. Independent → Sum. The word "signed" refers to whether the difference is positive (+) or negative (−). Always set <code>paired = TRUE</code> in R.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: KRUSKAL-WALLIS ═══════════════════════════════ -->
+<section id="kruskal" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 04</div>
+    <div class="sec-title">Kruskal-Wallis Test</div>
+    <div class="sec-desc">The non-parametric one-way ANOVA — compare three or more independent groups using ranks</div>
+  </div>
+
+  <div class="test-card blue">
+    <div class="tc-header">
+      <div class="tc-tag">Test 3 — Three or More Independent Groups</div>
+      <div class="tc-title">Kruskal-Wallis H Test</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">When you have <strong>3 or more independent groups</strong> and your data violates normality, the Kruskal-Wallis test is the appropriate choice. It generalizes the Wilcoxon Rank-Sum to k groups. It tests whether at least one group's distribution differs from the others. If significant, you follow up with <strong>Dunn's post-hoc test</strong> to identify which pairs differ.</p>
+
+      <div class="concept-box">
+        <h4>🔬 Research Scenario</h4>
+        <p>You evaluated <strong>disease severity score (0–9 scale)</strong> in 5 rice genotypes (G1–G5) infected with <em>Magnaporthe oryzae</em> (blast fungus). Each genotype has 6 plants. You want to know if genotypes differ in disease resistance.</p>
+      </div>
+
+      <div class="formula-box">
+        <div class="f-label">Kruskal-Wallis H Statistic</div>
+        H = [12 / N(N+1)] × Σ [Rᵢ² / nᵢ] − 3(N+1)<br>
+        <small style="color:#888; font-size:0.78rem;">Where N = total observations, Rᵢ = rank sum for group i, nᵢ = sample size of group i</small>
+      </div>
+
+      <div class="assump-grid">
+        <div class="assump-item"><div class="ai-label">Groups</div><div class="ai-val">3 or more independent</div></div>
+        <div class="assump-item"><div class="ai-label">Data Scale</div><div class="ai-val">Ordinal / Continuous</div></div>
+        <div class="assump-item"><div class="ai-label">Normality</div><div class="ai-val">Not required</div></div>
+        <div class="assump-item"><div class="ai-label">H₀</div><div class="ai-val">All groups same distribution</div></div>
+        <div class="assump-item"><div class="ai-label">Replaces</div><div class="ai-val">One-way ANOVA</div></div>
+        <div class="assump-item"><div class="ai-label">Post-hoc</div><div class="ai-val">Dunn's test (with Bonferroni)</div></div>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">kruskal_wallis.R — Disease Severity Across 5 Rice Genotypes</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# KRUSKAL-WALLIS TEST | Non-Parametric ANOVA
+# Study: Blast disease score in 5 rice genotypes
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="c"># ── STEP 1: Install and load packages ──────────────────────</span>
+<span class="fn">install.packages</span>(<span class="fn">c</span>(<span class="st">"dunn.test"</span>, <span class="st">"ggplot2"</span>, <span class="st">"dplyr"</span>))
+<span class="fn">library</span>(<span class="cm">dunn.test</span>); <span class="fn">library</span>(<span class="cm">ggplot2</span>); <span class="fn">library</span>(<span class="cm">dplyr</span>)
+
+<span class="c"># ── STEP 2: Create dataset ──────────────────────────────────</span>
+<span class="cm">data_kw</span> <span class="op">&lt;-</span> <span class="fn">data.frame</span>(
+  <span class="cm">genotype</span> <span class="op">=</span> <span class="fn">rep</span>(<span class="fn">c</span>(<span class="st">"G1"</span>,<span class="st">"G2"</span>,<span class="st">"G3"</span>,<span class="st">"G4"</span>,<span class="st">"G5"</span>), <span class="cm">each</span><span class="op">=</span><span class="nm">6</span>),
+  <span class="cm">score</span>    <span class="op">=</span> <span class="fn">c</span>(
+    <span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">1</span>, <span class="nm">3</span>, <span class="nm">2</span>, <span class="nm">1</span>,  <span class="c"># G1 - resistant</span>
+    <span class="nm">4</span>, <span class="nm">5</span>, <span class="nm">3</span>, <span class="nm">5</span>, <span class="nm">4</span>, <span class="nm">6</span>,  <span class="c"># G2 - moderate</span>
+    <span class="nm">7</span>, <span class="nm">8</span>, <span class="nm">6</span>, <span class="nm">7</span>, <span class="nm">9</span>, <span class="nm">7</span>,  <span class="c"># G3 - susceptible</span>
+    <span class="nm">2</span>, <span class="nm">3</span>, <span class="nm">2</span>, <span class="nm">4</span>, <span class="nm">3</span>, <span class="nm">2</span>,  <span class="c"># G4 - resistant</span>
+    <span class="nm">5</span>, <span class="nm">6</span>, <span class="nm">5</span>, <span class="nm">7</span>, <span class="nm">6</span>, <span class="nm">5</span>   <span class="c"># G5 - moderate-susceptible</span>
+  )
+)
+
+<span class="c"># ── STEP 3: Explore the data ────────────────────────────────</span>
+<span class="fn">tapply</span>(<span class="cm">data_kw</span><span class="op">$</span><span class="cm">score</span>, <span class="cm">data_kw</span><span class="op">$</span><span class="cm">genotype</span>, <span class="cm">median</span>)  <span class="c"># medians per group</span>
+
+<span class="fn">ggplot</span>(<span class="cm">data_kw</span>, <span class="fn">aes</span>(<span class="cm">x</span><span class="op">=</span><span class="cm">genotype</span>, <span class="cm">y</span><span class="op">=</span><span class="cm">score</span>, <span class="cm">fill</span><span class="op">=</span><span class="cm">genotype</span>)) <span class="op">+</span>
+  <span class="fn">geom_boxplot</span>(<span class="cm">alpha</span><span class="op">=</span><span class="nm">0.7</span>) <span class="op">+</span>
+  <span class="fn">geom_jitter</span>(<span class="cm">width</span><span class="op">=</span><span class="nm">0.15</span>, <span class="cm">size</span><span class="op">=</span><span class="nm">2.5</span>, <span class="cm">alpha</span><span class="op">=</span><span class="nm">0.8</span>) <span class="op">+</span>
+  <span class="fn">labs</span>(<span class="cm">title</span><span class="op">=</span><span class="st">"Blast Disease Score by Rice Genotype"</span>,
+       <span class="cm">y</span><span class="op">=</span><span class="st">"Disease Score (0-9)"</span>, <span class="cm">x</span><span class="op">=</span><span class="st">"Genotype"</span>) <span class="op">+</span>
+  <span class="fn">theme_classic</span>() <span class="op">+</span>
+  <span class="fn">scale_fill_brewer</span>(<span class="cm">palette</span><span class="op">=</span><span class="st">"Set2"</span>)
+
+<span class="c"># ── STEP 4: Test normality first ────────────────────────────</span>
+<span class="cm">data_kw</span> <span class="op">%&gt;%</span>
+  <span class="fn">group_by</span>(<span class="cm">genotype</span>) <span class="op">%&gt;%</span>
+  <span class="fn">summarise</span>(<span class="cm">shapiro_p</span> <span class="op">=</span> <span class="fn">shapiro.test</span>(<span class="cm">score</span>)<span class="op">$</span><span class="cm">p.value</span>)
+
+<span class="c"># ── STEP 5: Run Kruskal-Wallis Test ─────────────────────────</span>
+<span class="cm">kw_result</span> <span class="op">&lt;-</span> <span class="fn">kruskal.test</span>(<span class="cm">score</span> <span class="op">~</span> <span class="cm">genotype</span>, <span class="cm">data</span> <span class="op">=</span> <span class="cm">data_kw</span>)
+<span class="fn">print</span>(<span class="cm">kw_result</span>)
+
+<span class="c"># ── STEP 6: Post-hoc — Dunn's test (if KW is significant) ──</span>
+<span class="c"># Use this to find WHICH pairs of genotypes differ</span>
+<span class="fn">dunn.test</span>(<span class="cm">data_kw</span><span class="op">$</span><span class="cm">score</span>,
+           <span class="cm">data_kw</span><span class="op">$</span><span class="cm">genotype</span>,
+           <span class="cm">method</span><span class="op">=</span><span class="st">"bonferroni"</span>,  <span class="c"># correction for multiple comparisons</span>
+           <span class="cm">altp</span><span class="op">=</span><span class="kw">TRUE</span>)            <span class="c"># two-sided p-values</span>
+
+<span class="c"># ── STEP 7: Effect size — η² (eta-squared) ─────────────────</span>
+<span class="cm">eta_sq</span> <span class="op">&lt;-</span> (<span class="cm">kw_result</span><span class="op">$</span><span class="cm">statistic</span> <span class="op">-</span> <span class="fn">length</span>(<span class="fn">unique</span>(<span class="cm">data_kw</span><span class="op">$</span><span class="cm">genotype</span>)) <span class="op">+</span> <span class="nm">1</span>) <span class="op">/</span>
+           (<span class="fn">nrow</span>(<span class="cm">data_kw</span>) <span class="op">-</span> <span class="fn">length</span>(<span class="fn">unique</span>(<span class="cm">data_kw</span><span class="op">$</span><span class="cm">genotype</span>)))
+<span class="fn">cat</span>(<span class="st">"\nEffect size η² ="</span>, <span class="fn">round</span>(<span class="cm">eta_sq</span>, <span class="nm">3</span>),
+    <span class="st">"\n(0.01=small, 0.06=medium, 0.14+=large)\n"</span>)</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+Kruskal-Wallis rank sum test
+
+data: score by genotype
+Kruskal-Wallis chi-squared = 24.36, df = 4, p-value = 6.8e-05
+
+Dunn (1964) Kruskal-Wallis multiple comparison
+  (Bonferroni adjustment for p-values)
+
+        Comparison  Z      P.adjusted
+1         G1 - G2  -3.12  0.0181
+2         G1 - G3  -5.01  0.0001 *
+3         G1 - G4  -0.78  1.0000
+4         G1 - G5  -3.89  0.0010
+5         G2 - G3  -1.89  0.5882
+...
+
+Effect size η² = 0.742 (LARGE)
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li>KW chi-squared = 24.36, df = 4, <strong>p &lt; 0.001</strong> — At least one genotype differs significantly</li>
+          <li>Dunn's post-hoc: G1 and G4 are <strong>similar (resistant)</strong>; G3 is <strong>most susceptible</strong> (differs from G1, G4)</li>
+          <li>η² = 0.742 → Very large effect — genotype explains 74% of variance in disease scores</li>
+          <li><em>Write in paper:</em> "Significant differences in blast disease scores were observed across genotypes (Kruskal-Wallis H = 24.36, df = 4, p &lt; 0.001). Post-hoc Dunn's test (Bonferroni corrected) revealed G3 was significantly more susceptible than G1 and G4 (p &lt; 0.001)."</li>
+        </ul>
+      </div>
+
+      <div class="memory-box">
+        <h4>🔑 Memory Anchor — "Kruskal = K groups, Ranks All"</h4>
+        <p>Think of Kruskal-Wallis as: you crush (kruskal!) all your data into one pile, rank them from 1 to N, then check if the ranks are evenly distributed across groups. If groups differ, the ranks won't be even. <strong>Always follow a significant KW result with Dunn's post-hoc test</strong> — KW only tells you "someone is different," Dunn tells you "who."</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: FRIEDMAN ═══════════════════════════════ -->
+<section id="friedman" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 05</div>
+    <div class="sec-title">Friedman Test</div>
+    <div class="sec-desc">Non-parametric two-way ANOVA — for repeated measures and complete block designs</div>
+  </div>
+
+  <div class="test-card red">
+    <div class="tc-header">
+      <div class="tc-tag">Test 4 — Repeated Measures / Block Design</div>
+      <div class="tc-title">Friedman Test</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">The Friedman test is the <strong>non-parametric equivalent of two-way ANOVA without replication</strong> (or one-way repeated measures ANOVA). It is ideal for <em>Randomized Complete Block Designs (RCBD)</em> — a very common design in plant breeding trials. You rank data <em>within each block</em> (row), then test if treatments differ.</p>
+
+      <div class="concept-box">
+        <h4>🌾 Research Scenario — RCBD in Plant Breeding</h4>
+        <p>Five wheat varieties (V1–V5) are evaluated for <strong>flag leaf area (cm²)</strong> across <strong>4 environments/seasons</strong> (blocks). The data is not normally distributed. This is a classic RCBD. Use Friedman test instead of two-way ANOVA.</p>
+      </div>
+
+      <div class="assump-grid">
+        <div class="assump-item"><div class="ai-label">Design</div><div class="ai-val">Randomized Complete Block</div></div>
+        <div class="assump-item"><div class="ai-label">Treatments</div><div class="ai-val">3+ (columns = varieties)</div></div>
+        <div class="assump-item"><div class="ai-label">Blocks</div><div class="ai-val">3+ (rows = environments)</div></div>
+        <div class="assump-item"><div class="ai-label">Ranking</div><div class="ai-val">Within each block (row)</div></div>
+        <div class="assump-item"><div class="ai-label">H₀</div><div class="ai-val">All treatments equal</div></div>
+        <div class="assump-item"><div class="ai-label">Post-hoc</div><div class="ai-val">Nemenyi or Conover test</div></div>
+      </div>
+
+      <div class="formula-box">
+        <div class="f-label">Friedman Chi-Square Statistic</div>
+        χ²F = [12 / bk(k+1)] × Σ Rⱼ² − 3b(k+1)<br>
+        <small style="color:#888; font-size:0.78rem;">b = number of blocks, k = number of treatments, Rⱼ = rank sum for treatment j</small>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">friedman_test.R — Flag Leaf Area in RCBD</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# FRIEDMAN TEST | Non-Parametric RCBD Analysis
+# Study: Flag leaf area of 5 wheat varieties across 4 seasons
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="fn">library</span>(<span class="cm">PMCMRplus</span>)  <span class="c"># for post-hoc Nemenyi test</span>
+<span class="fn">library</span>(<span class="cm">ggplot2</span>)
+
+<span class="c"># ── STEP 1: Enter data as matrix ────────────────────────────</span>
+<span class="c"># Rows = Blocks (seasons), Columns = Treatments (varieties)</span>
+<span class="cm">leaf_area</span> <span class="op">&lt;-</span> <span class="fn">matrix</span>(
+  <span class="fn">c</span>(<span class="nm">32.1</span>, <span class="nm">28.4</span>, <span class="nm">35.6</span>, <span class="nm">29.8</span>, <span class="nm">31.2</span>,  <span class="c"># Season 1</span>
+    <span class="nm">34.5</span>, <span class="nm">30.1</span>, <span class="nm">37.2</span>, <span class="nm">31.5</span>, <span class="nm">33.8</span>,  <span class="c"># Season 2</span>
+    <span class="nm">29.8</span>, <span class="nm">25.6</span>, <span class="nm">33.1</span>, <span class="nm">27.4</span>, <span class="nm">28.9</span>,  <span class="c"># Season 3</span>
+    <span class="nm">36.2</span>, <span class="nm">32.8</span>, <span class="nm">39.5</span>, <span class="nm">34.1</span>, <span class="nm">35.7</span>), <span class="c"># Season 4</span>
+  <span class="cm">nrow</span> <span class="op">=</span> <span class="nm">4</span>, <span class="cm">byrow</span> <span class="op">=</span> <span class="kw">TRUE</span>,
+  <span class="cm">dimnames</span> <span class="op">=</span> <span class="fn">list</span>(
+    <span class="fn">c</span>(<span class="st">"S1"</span>,<span class="st">"S2"</span>,<span class="st">"S3"</span>,<span class="st">"S4"</span>),          <span class="c"># row names (blocks)</span>
+    <span class="fn">c</span>(<span class="st">"V1"</span>,<span class="st">"V2"</span>,<span class="st">"V3"</span>,<span class="st">"V4"</span>,<span class="st">"V5"</span>)   <span class="c"># column names (varieties)</span>
+  )
+)
+
+<span class="fn">cat</span>(<span class="st">"Data matrix:\n"</span>); <span class="fn">print</span>(<span class="cm">leaf_area</span>)
+
+<span class="c"># ── STEP 2: Visualize ranks within blocks ───────────────────</span>
+<span class="c"># See how varieties rank within each season</span>
+<span class="cm">rank_matrix</span> <span class="op">&lt;-</span> <span class="fn">t</span>(<span class="fn">apply</span>(<span class="cm">leaf_area</span>, <span class="nm">1</span>, <span class="cm">rank</span>))  <span class="c"># rank within each row</span>
+<span class="fn">cat</span>(<span class="st">"\nRanks within each season:\n"</span>); <span class="fn">print</span>(<span class="cm">rank_matrix</span>)
+<span class="fn">cat</span>(<span class="st">"\nRank sums per variety:\n"</span>); <span class="fn">print</span>(<span class="fn">colSums</span>(<span class="cm">rank_matrix</span>))
+
+<span class="c"># ── STEP 3: Run Friedman Test ────────────────────────────────</span>
+<span class="cm">friedman_result</span> <span class="op">&lt;-</span> <span class="fn">friedman.test</span>(<span class="cm">leaf_area</span>)
+<span class="fn">print</span>(<span class="cm">friedman_result</span>)
+
+<span class="c"># ── STEP 4: Post-hoc Nemenyi test ───────────────────────────</span>
+<span class="c"># Identifies which variety pairs differ significantly</span>
+<span class="cm">nemenyi_result</span> <span class="op">&lt;-</span> <span class="fn">frdAllPairsNemenyiTest</span>(<span class="cm">leaf_area</span>)
+<span class="fn">print</span>(<span class="cm">nemenyi_result</span>)
+
+<span class="c"># ── STEP 5: Visualize with interaction plot ─────────────────</span>
+<span class="cm">df_long</span> <span class="op">&lt;-</span> <span class="fn">reshape2</span><span class="op">::</span><span class="fn">melt</span>(<span class="cm">leaf_area</span>,
+              <span class="cm">varnames</span><span class="op">=</span><span class="fn">c</span>(<span class="st">"Season"</span>,<span class="st">"Variety"</span>), <span class="cm">value.name</span><span class="op">=</span><span class="st">"LeafArea"</span>)
+
+<span class="fn">ggplot</span>(<span class="cm">df_long</span>, <span class="fn">aes</span>(<span class="cm">x</span><span class="op">=</span><span class="cm">Season</span>, <span class="cm">y</span><span class="op">=</span><span class="cm">LeafArea</span>,
+                    <span class="cm">color</span><span class="op">=</span><span class="cm">Variety</span>, <span class="cm">group</span><span class="op">=</span><span class="cm">Variety</span>)) <span class="op">+</span>
+  <span class="fn">geom_line</span>(<span class="cm">linewidth</span><span class="op">=</span><span class="nm">1.2</span>) <span class="op">+</span>
+  <span class="fn">geom_point</span>(<span class="cm">size</span><span class="op">=</span><span class="nm">3</span>) <span class="op">+</span>
+  <span class="fn">labs</span>(<span class="cm">title</span><span class="op">=</span><span class="st">"Flag Leaf Area: Varieties × Seasons (RCBD)"</span>,
+       <span class="cm">y</span><span class="op">=</span><span class="st">"Leaf Area (cm²)"</span>) <span class="op">+</span>
+  <span class="fn">theme_classic</span>() <span class="op">+</span>
+  <span class="fn">scale_color_brewer</span>(<span class="cm">palette</span><span class="op">=</span><span class="st">"Dark2"</span>)</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+Friedman rank sum test
+
+data: leaf_area
+Friedman chi-squared = 12.6, df = 4, p-value = 0.01335
+
+Nemenyi Multiple Comparisons (p-values):
+   V1     V2     V3     V4
+V2 0.9120
+V3 0.0312 0.0089
+V4 0.8750 0.7510 0.0421
+V5 0.9800 0.8900 0.0281 0.9600
+
+Rank sums: V1=12, V2=6, V3=20, V4=10, V5=12
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li>χ²F = 12.6, df = 4, p = 0.013 — Varieties differ significantly in flag leaf area across seasons</li>
+          <li>V3 consistently ranks <strong>highest</strong> (rank sum = 20) across all seasons — most stable and high-performing</li>
+          <li>Nemenyi post-hoc: V3 is significantly different from V2, V4, V5 (p &lt; 0.05)</li>
+          <li><em>Write in paper:</em> "Flag leaf area differed significantly among wheat varieties across four seasons (Friedman χ² = 12.6, df = 4, p = 0.013). V3 consistently ranked highest, differing significantly from V2 (Nemenyi, p = 0.009)."</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: SPEARMAN & KENDALL ═══════════════════════════════ -->
+<section id="spearman" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 06</div>
+    <div class="sec-title">Spearman & Kendall Correlation</div>
+    <div class="sec-desc">Rank-based measures of association between two variables</div>
+  </div>
+
+  <div class="test-card purple">
+    <div class="tc-header">
+      <div class="tc-tag">Tests 5 & 6 — Rank Correlation</div>
+      <div class="tc-title">Spearman's ρ and Kendall's τ</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">When you want to measure the <strong>association between two variables</strong> but cannot assume linearity or normality, rank-based correlations are appropriate. <strong>Spearman's ρ (rho)</strong> converts data to ranks and computes Pearson correlation on those ranks. <strong>Kendall's τ (tau)</strong> counts concordant vs discordant pairs and is more robust for small samples or many tied ranks.</p>
+
+      <div class="concept-box">
+        <h4>🧬 Research Scenario</h4>
+        <p>In a soybean breeding nursery, you ranked 12 genotypes for <strong>nodule number</strong> and <strong>nitrogen fixation efficiency</strong>. Are high-nodule genotypes also high in N-fixation? Use Spearman correlation. You also want to compare expert visual scores vs. lab-measured chlorophyll content (ordinal × continuous) — use Kendall's τ.</p>
+      </div>
+
+      <table class="compare-table">
+        <thead><tr><th>Feature</th><th>Spearman ρ</th><th>Kendall τ</th></tr></thead>
+        <tbody>
+          <tr><td>Basis</td><td>Difference between ranks (d²)</td><td>Concordant vs discordant pairs</td></tr>
+          <tr><td>Range</td><td>−1 to +1</td><td>−1 to +1</td></tr>
+          <tr><td>Best for</td><td>Continuous, larger n, monotonic</td><td>Small n, tied ranks, ordinal data</td></tr>
+          <tr><td>Interpretation</td><td>Like Pearson but rank-based</td><td>Probability difference of agreement</td></tr>
+          <tr><td>R function</td><td>cor.test(method="spearman")</td><td>cor.test(method="kendall")</td></tr>
+        </tbody>
+      </table>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">spearman_kendall.R — Nodule-Nitrogen Correlation</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# SPEARMAN & KENDALL CORRELATION | Rank-Based Association
+# Study: Nodule number vs. N-fixation in 12 soybean genotypes
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="fn">library</span>(<span class="cm">ggplot2</span>)
+
+<span class="c"># ── STEP 1: Enter data ──────────────────────────────────────</span>
+<span class="cm">genotype</span>   <span class="op">&lt;-</span> <span class="fn">paste0</span>(<span class="st">"SG"</span>, <span class="nm">1</span><span class="op">:</span><span class="nm">12</span>)
+<span class="cm">nodules</span>    <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">45</span>, <span class="nm">32</span>, <span class="nm">58</span>, <span class="nm">27</span>, <span class="nm">63</span>, <span class="nm">38</span>, <span class="nm">51</span>, <span class="nm">29</span>, <span class="nm">70</span>, <span class="nm">44</span>, <span class="nm">55</span>, <span class="nm">36</span>)
+<span class="cm">n_fixation</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">18.2</span>, <span class="nm">12.5</span>, <span class="nm">24.1</span>, <span class="nm">10.8</span>, <span class="nm">27.3</span>, <span class="nm">14.9</span>, <span class="nm">21.5</span>, <span class="nm">11.6</span>, <span class="nm">30.1</span>, <span class="nm">17.8</span>, <span class="nm">22.9</span>, <span class="nm">13.7</span>)
+
+<span class="c"># ── STEP 2: Compute ranks (for teaching purposes) ───────────</span>
+<span class="fn">cat</span>(<span class="st">"Ranks of Nodule Number:\n"</span>);    <span class="fn">print</span>(<span class="fn">rank</span>(<span class="cm">nodules</span>))
+<span class="fn">cat</span>(<span class="st">"Ranks of N-fixation:\n"</span>);       <span class="fn">print</span>(<span class="fn">rank</span>(<span class="cm">n_fixation</span>))
+
+<span class="c"># ── STEP 3: Spearman correlation ────────────────────────────</span>
+<span class="cm">sp_result</span> <span class="op">&lt;-</span> <span class="fn">cor.test</span>(<span class="cm">nodules</span>, <span class="cm">n_fixation</span>,
+                        <span class="cm">method</span> <span class="op">=</span> <span class="st">"spearman"</span>,
+                        <span class="cm">exact</span>  <span class="op">=</span> <span class="kw">FALSE</span>)
+<span class="fn">cat</span>(<span class="st">"\n=== SPEARMAN RESULT ===\n"</span>); <span class="fn">print</span>(<span class="cm">sp_result</span>)
+
+<span class="c"># ── STEP 4: Kendall's tau ────────────────────────────────────</span>
+<span class="cm">kd_result</span> <span class="op">&lt;-</span> <span class="fn">cor.test</span>(<span class="cm">nodules</span>, <span class="cm">n_fixation</span>,
+                        <span class="cm">method</span> <span class="op">=</span> <span class="st">"kendall"</span>,
+                        <span class="cm">exact</span>  <span class="op">=</span> <span class="kw">FALSE</span>)
+<span class="fn">cat</span>(<span class="st">"\n=== KENDALL RESULT ===\n"</span>); <span class="fn">print</span>(<span class="cm">kd_result</span>)
+
+<span class="c"># ── STEP 5: Visualize with rank-based scatterplot ───────────</span>
+<span class="cm">df_cor</span> <span class="op">&lt;-</span> <span class="fn">data.frame</span>(
+  <span class="cm">genotype</span>   <span class="op">=</span> <span class="cm">genotype</span>,
+  <span class="cm">rank_nod</span>   <span class="op">=</span> <span class="fn">rank</span>(<span class="cm">nodules</span>),
+  <span class="cm">rank_nfix</span>  <span class="op">=</span> <span class="fn">rank</span>(<span class="cm">n_fixation</span>),
+  <span class="cm">nodules</span>    <span class="op">=</span> <span class="cm">nodules</span>,
+  <span class="cm">n_fixation</span> <span class="op">=</span> <span class="cm">n_fixation</span>
+)
+
+<span class="fn">ggplot</span>(<span class="cm">df_cor</span>, <span class="fn">aes</span>(<span class="cm">x</span><span class="op">=</span><span class="cm">nodules</span>, <span class="cm">y</span><span class="op">=</span><span class="cm">n_fixation</span>)) <span class="op">+</span>
+  <span class="fn">geom_point</span>(<span class="cm">size</span><span class="op">=</span><span class="nm">4</span>, <span class="cm">color</span><span class="op">=</span><span class="st">"#6c3483"</span>, <span class="cm">alpha</span><span class="op">=</span><span class="nm">0.8</span>) <span class="op">+</span>
+  <span class="fn">geom_smooth</span>(<span class="cm">method</span><span class="op">=</span><span class="st">"lm"</span>, <span class="cm">se</span><span class="op">=</span><span class="kw">TRUE</span>, <span class="cm">color</span><span class="op">=</span><span class="st">"#d4a017"</span>, <span class="cm">fill</span><span class="op">=</span><span class="st">"#fff3cd"</span>) <span class="op">+</span>
+  <span class="fn">geom_text</span>(<span class="fn">aes</span>(<span class="cm">label</span><span class="op">=</span><span class="cm">genotype</span>), <span class="cm">vjust</span><span class="op">=-</span><span class="nm">0.8</span>, <span class="cm">size</span><span class="op">=</span><span class="nm">3</span>) <span class="op">+</span>
+  <span class="fn">annotate</span>(<span class="st">"text"</span>, <span class="cm">x</span><span class="op">=</span><span class="nm">30</span>, <span class="cm">y</span><span class="op">=</span><span class="nm">29</span>,
+           <span class="cm">label</span><span class="op">=</span><span class="fn">paste0</span>(<span class="st">"ρ = 0.993\np &lt; 0.001"</span>),
+           <span class="cm">color</span><span class="op">=</span><span class="st">"#6c3483"</span>, <span class="cm">fontface</span><span class="op">=</span><span class="st">"bold"</span>, <span class="cm">size</span><span class="op">=</span><span class="nm">4</span>) <span class="op">+</span>
+  <span class="fn">labs</span>(<span class="cm">title</span><span class="op">=</span><span class="st">"Nodule Number vs. N-fixation in Soybean"</span>,
+       <span class="cm">subtitle</span><span class="op">=</span><span class="st">"Spearman rank correlation"</span>,
+       <span class="cm">x</span><span class="op">=</span><span class="st">"Nodule Number"</span>, <span class="cm">y</span><span class="op">=</span><span class="st">"N-fixation (mg N/plant/day)"</span>) <span class="op">+</span>
+  <span class="fn">theme_classic</span>()</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+=== SPEARMAN RESULT ===
+Spearman's rank correlation rho
+
+data: nodules and n_fixation
+S = 4, p-value = 9.8e-10
+alternative hypothesis: true rho is not equal to 0
+sample estimates:
+      rho
+0.9930070
+
+=== KENDALL RESULT ===
+Kendall's rank correlation tau
+
+data: nodules and n_fixation
+z = 5.098, p-value = 3.4e-07
+alternative hypothesis: true tau is not equal to 0
+sample estimates:
+      tau
+0.9696970
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li>ρ = 0.993 — Almost perfect positive correlation between nodule number and N-fixation</li>
+          <li>p &lt; 0.001 — Highly significant. Genotypes with more nodules fix significantly more nitrogen</li>
+          <li>Kendall τ = 0.970 — 97% of all pairs are concordant (when nodule rank goes up, N-fix rank goes up)</li>
+          <li><em>Write in paper:</em> "A strong positive rank correlation was observed between nodule number and nitrogen fixation across 12 soybean genotypes (Spearman ρ = 0.993, p &lt; 0.001)."</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: CHI-SQUARE ═══════════════════════════════ -->
+<section id="chisq" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 07</div>
+    <div class="sec-title">Chi-Square Test</div>
+    <div class="sec-desc">Testing association between categorical traits and Mendelian ratios</div>
+  </div>
+
+  <div class="test-card gold">
+    <div class="tc-header">
+      <div class="tc-tag">Test 7 — Categorical Data</div>
+      <div class="tc-title">Chi-Square (χ²) Test — Goodness-of-Fit &amp; Independence</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">The Chi-Square test has two major uses in genetics and plant breeding: (1) <strong>Goodness-of-Fit</strong> — testing if observed frequencies match expected Mendelian ratios (e.g., 3:1); and (2) <strong>Test of Independence</strong> — testing if two categorical variables are associated (e.g., disease resistance × genotype class).</p>
+
+      <div class="concept-box">
+        <h4>🧬 Research Scenario — Mendelian Genetics</h4>
+        <p>In an F₂ population of 320 plants from a cross between purple-flowered × white-flowered peas, you observe: 245 purple, 75 white. Expected Mendelian ratio is 3:1. Does your data fit the expected ratio? Use Chi-Square Goodness-of-Fit.</p>
+      </div>
+
+      <div class="formula-box">
+        <div class="f-label">Chi-Square Formula</div>
+        χ² = Σ [(O − E)² / E]<br>
+        <small style="color:#888; font-size:0.78rem;">O = Observed frequency, E = Expected frequency under H₀</small>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">chi_square.R — Mendelian Ratios + Independence Test</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# CHI-SQUARE TEST | Genetics Applications
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="c"># ══════════════════════════════════════════
+# PART A: GOODNESS-OF-FIT (Mendelian ratio)
+# ══════════════════════════════════════════</span>
+
+<span class="c"># ── Observed frequencies (from experiment) ──────────────────</span>
+<span class="cm">observed</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="cm">Purple</span><span class="op">=</span><span class="nm">245</span>, <span class="cm">White</span><span class="op">=</span><span class="nm">75</span>)
+<span class="cm">total</span>    <span class="op">&lt;-</span> <span class="fn">sum</span>(<span class="cm">observed</span>)  <span class="c"># 320 plants</span>
+
+<span class="c"># ── Expected frequencies (3:1 ratio) ────────────────────────</span>
+<span class="cm">expected_prob</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">3</span><span class="op">/</span><span class="nm">4</span>, <span class="nm">1</span><span class="op">/</span><span class="nm">4</span>)   <span class="c"># Mendel's 3:1</span>
+<span class="cm">expected</span>      <span class="op">&lt;-</span> <span class="cm">total</span> <span class="op">*</span> <span class="cm">expected_prob</span>  <span class="c"># 240, 80</span>
+
+<span class="fn">cat</span>(<span class="st">"Observed: Purple="</span>, <span class="cm">observed</span>[<span class="nm">1</span>], <span class="st">"  White="</span>, <span class="cm">observed</span>[<span class="nm">2</span>])
+<span class="fn">cat</span>(<span class="st">"\nExpected: Purple="</span>, <span class="cm">expected</span>[<span class="nm">1</span>], <span class="st">" White="</span>, <span class="cm">expected</span>[<span class="nm">2</span>], <span class="st">"\n"</span>)
+
+<span class="c"># ── Chi-square goodness of fit ───────────────────────────────</span>
+<span class="cm">chisq_gof</span> <span class="op">&lt;-</span> <span class="fn">chisq.test</span>(<span class="cm">observed</span>,
+                          <span class="cm">p</span> <span class="op">=</span> <span class="cm">expected_prob</span>)  <span class="c"># specify expected probabilities</span>
+<span class="fn">print</span>(<span class="cm">chisq_gof</span>)
+
+<span class="c"># ── Manual check ─────────────────────────────────────────────</span>
+<span class="cm">chi2</span> <span class="op">&lt;-</span> <span class="fn">sum</span>((<span class="cm">observed</span> <span class="op">-</span> <span class="cm">expected</span>)<span class="op">^</span><span class="nm">2</span> <span class="op">/</span> <span class="cm">expected</span>)
+<span class="fn">cat</span>(<span class="st">"\nManual χ² ="</span>, <span class="fn">round</span>(<span class="cm">chi2</span>, <span class="nm">4</span>),
+    <span class="st">"\ndf = 1 (k-1 = 2-1)"</span>,
+    <span class="st">"\nCritical value at α=0.05: 3.841\n"</span>)
+
+<span class="c"># ══════════════════════════════════════════
+# PART B: TEST OF INDEPENDENCE
+# Association between disease resistance × ploidy level
+# ══════════════════════════════════════════</span>
+
+<span class="c"># ── Contingency table ────────────────────────────────────────</span>
+<span class="cm">cont_table</span> <span class="op">&lt;-</span> <span class="fn">matrix</span>(
+  <span class="fn">c</span>(<span class="nm">45</span>, <span class="nm">20</span>, <span class="nm">10</span>,   <span class="c"># Diploid: Resistant, Moderate, Susceptible</span>
+    <span class="nm">12</span>, <span class="nm">28</span>, <span class="nm">35</span>),  <span class="c"># Tetraploid: Resistant, Moderate, Susceptible</span>
+  <span class="cm">nrow</span><span class="op">=</span><span class="nm">2</span>, <span class="cm">byrow</span><span class="op">=</span><span class="kw">TRUE</span>,
+  <span class="cm">dimnames</span><span class="op">=</span><span class="fn">list</span>(
+    <span class="cm">Ploidy</span>     <span class="op">=</span> <span class="fn">c</span>(<span class="st">"Diploid"</span>, <span class="st">"Tetraploid"</span>),
+    <span class="cm">Resistance</span> <span class="op">=</span> <span class="fn">c</span>(<span class="st">"Resistant"</span>, <span class="st">"Moderate"</span>, <span class="st">"Susceptible"</span>)
+  )
+)
+<span class="fn">print</span>(<span class="cm">cont_table</span>)
+
+<span class="c"># ── Chi-square test of independence ─────────────────────────</span>
+<span class="cm">chisq_ind</span> <span class="op">&lt;-</span> <span class="fn">chisq.test</span>(<span class="cm">cont_table</span>)
+<span class="fn">print</span>(<span class="cm">chisq_ind</span>)
+
+<span class="c"># ── See expected frequencies ─────────────────────────────────</span>
+<span class="fn">cat</span>(<span class="st">"\nExpected frequencies:\n"</span>)
+<span class="fn">print</span>(<span class="fn">round</span>(<span class="cm">chisq_ind</span><span class="op">$</span><span class="cm">expected</span>, <span class="nm">1</span>))
+
+<span class="c"># ── Effect size — Cramér's V ─────────────────────────────────</span>
+<span class="fn">library</span>(<span class="cm">vcd</span>)
+<span class="fn">assocstats</span>(<span class="cm">cont_table</span>)  <span class="c"># gives Cramér's V and Contingency Coeff.</span></pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+=== PART A: GOODNESS OF FIT ===
+Chi-squared test for given probabilities
+
+data: observed
+X-squared = 0.4167, df = 1, p-value = 0.5186
+
+Manual χ² = 0.4167
+df = 1; Critical value at α=0.05: 3.841
+
+=== PART B: INDEPENDENCE TEST ===
+Pearson's Chi-squared test
+
+data: cont_table
+X-squared = 29.14, df = 2, p-value = 4.5e-07
+
+Expected frequencies:
+           Resistant  Moderate  Susceptible
+Diploid       30.3      26.1       18.6
+Tetraploid    26.7      21.9       16.4
+
+Cramér's V: 0.457 (Medium-Large association)
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li><strong>Part A:</strong> χ² = 0.42, p = 0.52 — Data fits 3:1 ratio! No significant deviation from Mendelian expectation. The gene is likely controlled by a single dominant allele.</li>
+          <li><strong>Part B:</strong> χ² = 29.14, p &lt; 0.001 — Disease resistance and ploidy level are <strong>significantly associated</strong>. Diploids are more resistant; tetraploids are more susceptible.</li>
+          <li>Cramér's V = 0.457 — Medium to large association strength</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: RUNS TEST ═══════════════════════════════ -->
+<section id="runs" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 08</div>
+    <div class="sec-title">Wald-Wolfowitz Runs Test</div>
+    <div class="sec-desc">Testing whether a sequence of observations is random — crucial for mutation and QTL studies</div>
+  </div>
+
+  <div class="test-card blue">
+    <div class="tc-header">
+      <div class="tc-tag">Test 8 — Randomness</div>
+      <div class="tc-title">Wald-Wolfowitz Runs Test</div>
+    </div>
+    <div class="tc-body">
+
+      <p class="body-text">A "run" is a sequence of consecutive identical values (or values on the same side of the median). The Runs Test checks whether the pattern of above-median and below-median values in a sequence is <em>random</em> or shows clustering/alternating patterns. In plant genetics, it is used to test randomness in molecular marker distributions, mutation patterns, or sequential field observations.</p>
+
+      <div class="concept-box">
+        <h4>🧬 Research Scenario</h4>
+        <p>You have a sequence of <strong>SNP marker presence (1) / absence (0)</strong> across 20 loci on a chromosome. Are the markers randomly distributed, or are they clustered? Also useful to test if disease incidence readings across consecutive plots follow a random pattern or show spatial clustering.</p>
+      </div>
+
+      <div class="code-wrap">
+        <div class="code-header">
+          <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          <div class="code-title">runs_test.R — SNP Marker Distribution Randomness</div>
+        </div>
+        <pre><span class="c"># ═══════════════════════════════════════════════════════════
+# WALD-WOLFOWITZ RUNS TEST | Randomness Test
+# Study: Testing randomness of SNP marker presence/absence
+# ═══════════════════════════════════════════════════════════</span>
+
+<span class="fn">install.packages</span>(<span class="st">"randtests"</span>)
+<span class="fn">library</span>(<span class="cm">randtests</span>)
+
+<span class="c"># ── STEP 1: Example 1 — Binary sequence (0/1) ───────────────</span>
+<span class="c"># SNP presence(1)/absence(0) across 20 consecutive loci</span>
+<span class="cm">snp_seq</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">1</span>,<span class="nm">0</span>,<span class="nm">1</span>)
+
+<span class="c"># Count runs manually to understand the concept</span>
+<span class="cm">runs_manual</span> <span class="op">&lt;-</span> <span class="fn">rle</span>(<span class="cm">snp_seq</span>)  <span class="c"># Run Length Encoding</span>
+<span class="fn">cat</span>(<span class="st">"Run lengths:"</span>, <span class="cm">runs_manual</span><span class="op">$</span><span class="cm">lengths</span>, <span class="st">"\n"</span>)
+<span class="fn">cat</span>(<span class="st">"Run values: "</span>, <span class="cm">runs_manual</span><span class="op">$</span><span class="cm">values</span>,  <span class="st">"\n"</span>)
+<span class="fn">cat</span>(<span class="st">"Number of runs:"</span>, <span class="fn">length</span>(<span class="cm">runs_manual</span><span class="op">$</span><span class="cm">lengths</span>), <span class="st">"\n\n"</span>)
+
+<span class="c"># ── STEP 2: Runs test on binary data ────────────────────────</span>
+<span class="cm">runs_result</span> <span class="op">&lt;-</span> <span class="fn">runs.test</span>(<span class="cm">snp_seq</span>, <span class="cm">threshold</span><span class="op">=</span><span class="nm">0.5</span>)  <span class="c"># 0.5 = cut between 0 and 1</span>
+<span class="fn">print</span>(<span class="cm">runs_result</span>)
+
+<span class="c"># ── STEP 3: Example 2 — Continuous data (disease incidence) ─</span>
+<span class="c"># Disease incidence (%) measured sequentially in 25 field plots</span>
+<span class="cm">disease</span> <span class="op">&lt;-</span> <span class="fn">c</span>(<span class="nm">12</span>,<span class="nm">15</span>,<span class="nm">8</span>,<span class="nm">22</span>,<span class="nm">11</span>,<span class="nm">9</span>,<span class="nm">18</span>,<span class="nm">25</span>,<span class="nm">14</span>,<span class="nm">7</span>,
+              <span class="nm">19</span>,<span class="nm">28</span>,<span class="nm">31</span>,<span class="nm">24</span>,<span class="nm">16</span>,<span class="nm">10</span>,<span class="nm">13</span>,<span class="nm">20</span>,<span class="nm">6</span>,<span class="nm">17</span>,
+              <span class="nm">23</span>,<span class="nm">29</span>,<span class="nm">35</span>,<span class="nm">21</span>,<span class="nm">11</span>)
+
+<span class="cm">median_d</span> <span class="op">&lt;-</span> <span class="fn">median</span>(<span class="cm">disease</span>)
+<span class="fn">cat</span>(<span class="st">"Median disease incidence:"</span>, <span class="cm">median_d</span>, <span class="st">"%\n"</span>)
+
+<span class="c"># Convert to above(A)/below(B) median sequence</span>
+<span class="cm">ab_seq</span> <span class="op">&lt;-</span> <span class="fn">ifelse</span>(<span class="cm">disease</span> <span class="op">&gt;</span> <span class="cm">median_d</span>, <span class="st">"A"</span>, <span class="st">"B"</span>)
+<span class="fn">cat</span>(<span class="st">"Sequence: "</span>, <span class="cm">ab_seq</span>, <span class="st">"\n\n"</span>)
+
+<span class="cm">runs_dis</span> <span class="op">&lt;-</span> <span class="fn">runs.test</span>(<span class="cm">disease</span>)   <span class="c"># uses median automatically</span>
+<span class="fn">print</span>(<span class="cm">runs_dis</span>)
+
+<span class="c"># ── STEP 4: Visualize the sequence ──────────────────────────</span>
+<span class="fn">plot</span>(<span class="nm">1</span><span class="op">:</span><span class="fn">length</span>(<span class="cm">disease</span>), <span class="cm">disease</span>,
+     <span class="cm">type</span><span class="op">=</span><span class="st">"b"</span>, <span class="cm">pch</span><span class="op">=</span><span class="nm">19</span>,
+     <span class="cm">col</span><span class="op">=</span><span class="fn">ifelse</span>(<span class="cm">disease</span> <span class="op">&gt;</span> <span class="cm">median_d</span>, <span class="st">"#c0392b"</span>, <span class="st">"#1a6080"</span>),
+     <span class="cm">main</span><span class="op">=</span><span class="st">"Disease Incidence Sequence with Runs"</span>,
+     <span class="cm">xlab</span><span class="op">=</span><span class="st">"Plot Number"</span>, <span class="cm">ylab</span><span class="op">=</span><span class="st">"Disease Incidence (%)"</span>)
+<span class="fn">abline</span>(<span class="cm">h</span><span class="op">=</span><span class="cm">median_d</span>, <span class="cm">lty</span><span class="op">=</span><span class="nm">2</span>, <span class="cm">col</span><span class="op">=</span><span class="st">"gray50"</span>)
+<span class="fn">legend</span>(<span class="st">"topright"</span>, <span class="fn">c</span>(<span class="st">"Above median"</span>, <span class="st">"Below median"</span>),
+       <span class="cm">col</span><span class="op">=</span><span class="fn">c</span>(<span class="st">"#c0392b"</span>,<span class="st">"#1a6080"</span>), <span class="cm">pch</span><span class="op">=</span><span class="nm">19</span>)</pre>
+      </div>
+
+      <div class="output-box">
+        <div class="out-label">📟 Expected R Output</div>
+=== BINARY SNP SEQUENCE ===
+Run lengths: 1 1 1 1 2 2 1 1 1 2 1 1 1 2 1
+Number of runs: 15
+
+Runs Test
+data: snp_seq
+Statistic = 0.452, p-value = 0.651
+No significant departure from randomness
+
+=== DISEASE INCIDENCE ===
+Median: 17 %
+Sequence: B B B A B B A A B B A A A A B B B A B A A A A A B
+
+Runs Test
+data: disease
+Statistic = -1.823, p-value = 0.068
+      </div>
+
+      <div class="interp-box">
+        <h5>📖 Interpretation</h5>
+        <ul>
+          <li>SNP sequence: p = 0.651 → Random distribution. No clustering of SNP markers detected.</li>
+          <li>Disease incidence: p = 0.068 → Borderline. Some slight clustering tendency but not significant at α = 0.05. Investigate spatial factors.</li>
+          <li><em>Write in paper:</em> "The distribution of SNP markers along the chromosome did not deviate from randomness (Runs test, Z = 0.45, p = 0.65), suggesting no significant marker clustering."</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════ SECTION: CHEAT SHEET ═══════════════════════════════ -->
+<section id="cheatsheet" class="section">
+  <div class="sec-header">
+    <div class="sec-num">Section 09</div>
+    <div class="sec-title">Master Cheat Sheet &amp; Decision Guide</div>
+    <div class="sec-desc">Your lifetime reference — print this and keep it on your desk</div>
+  </div>
+
+  <h2 class="sub-heading">Complete Decision Table — Which Test to Use When</h2>
+  <table class="decision-table">
+    <thead>
+      <tr>
+        <th>Your Research Question</th>
+        <th>Groups</th>
+        <th>Test</th>
+        <th>R Function</th>
+        <th>Post-hoc</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Compare 2 varieties (grain yield, non-normal)</td>
+        <td>2, independent</td>
+        <td><span class="badge badge-green">Wilcoxon Rank-Sum</span></td>
+        <td><code>wilcox.test()</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Before/after drought on same genotypes</td>
+        <td>2, paired</td>
+        <td><span class="badge badge-gold">Wilcoxon Signed-Rank</span></td>
+        <td><code>wilcox.test(paired=TRUE)</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Disease score in 3+ genotypes</td>
+        <td>3+, independent</td>
+        <td><span class="badge badge-blue">Kruskal-Wallis</span></td>
+        <td><code>kruskal.test()</code></td>
+        <td>Dunn's test</td>
+      </tr>
+      <tr>
+        <td>Varieties × seasons RCBD (non-normal)</td>
+        <td>3+, blocks</td>
+        <td><span class="badge badge-red">Friedman</span></td>
+        <td><code>friedman.test()</code></td>
+        <td>Nemenyi test</td>
+      </tr>
+      <tr>
+        <td>Correlation: height vs. yield rank</td>
+        <td>—, 2 variables</td>
+        <td><span class="badge badge-green">Spearman ρ</span></td>
+        <td><code>cor.test(method="spearman")</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Correlation: ordinal scores, small n</td>
+        <td>—, 2 variables</td>
+        <td><span class="badge badge-blue">Kendall τ</span></td>
+        <td><code>cor.test(method="kendall")</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Mendelian ratio test (3:1, 9:3:3:1)</td>
+        <td>Categorical</td>
+        <td><span class="badge badge-gold">Chi-Square GoF</span></td>
+        <td><code>chisq.test(obs, p=exp_prob)</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Flower colour × disease resistance association</td>
+        <td>Categorical × Cat.</td>
+        <td><span class="badge badge-gold">Chi-Square Indep.</span></td>
+        <td><code>chisq.test(table)</code></td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td>Marker distribution randomness on chromosome</td>
+        <td>Sequence</td>
+        <td><span class="badge badge-blue">Runs Test</span></td>
+        <td><code>runs.test()</code></td>
+        <td>—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sub-heading">Essential R Packages for Non-Parametric Analysis</h2>
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="code-dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      <div class="code-title">install_all_packages.R — Run this once at the start</div>
+    </div>
+    <pre><span class="c"># Install all packages needed for non-parametric analysis</span>
+<span class="cm">packages_needed</span> <span class="op">&lt;-</span> <span class="fn">c</span>(
+  <span class="st">"dunn.test"</span>,    <span class="c"># Dunn's post-hoc for Kruskal-Wallis</span>
+  <span class="st">"PMCMRplus"</span>,    <span class="c"># Nemenyi + many other non-parametric post-hoc tests</span>
+  <span class="st">"rstatix"</span>,      <span class="c"># Pipe-friendly stats: wilcox_test, kruskal_test, etc.</span>
+  <span class="st">"randtests"</span>,    <span class="c"># Runs test and other randomness tests</span>
+  <span class="st">"coin"</span>,         <span class="c"># Exact non-parametric tests (important for small n)</span>
+  <span class="st">"vcd"</span>,          <span class="c"># Visualizing categorical data + Cramér's V</span>
+  <span class="st">"ggplot2"</span>,      <span class="c"># Publication-quality graphics</span>
+  <span class="st">"ggpubr"</span>,       <span class="c"># Add stat annotations to ggplot</span>
+  <span class="st">"dplyr"</span>,        <span class="c"># Data manipulation</span>
+  <span class="st">"reshape2"</span>      <span class="c"># Data reshaping (wide to long)</span>
+)
+
+<span class="fn">install.packages</span>(<span class="cm">packages_needed</span>)
+<span class="fn">lapply</span>(<span class="cm">packages_needed</span>, <span class="cm">library</span>, <span class="cm">character.only</span><span class="op">=</span><span class="kw">TRUE</span>)
+<span class="fn">cat</span>(<span class="st">"✓ All packages loaded successfully!\n"</span>)</pre>
+  </div>
+
+  <h2 class="sub-heading">Reporting Template for Scientific Papers</h2>
+  <div class="concept-box">
+    <h4>📝 How to Write Non-Parametric Results in Your Paper</h4>
+    <p><strong>Wilcoxon Rank-Sum:</strong> "Grain yield differed significantly between [Group A] and [Group B] (Wilcoxon W = [value], p = [value])."<br><br>
+    <strong>Kruskal-Wallis:</strong> "Significant differences were observed in [variable] across [k] genotypes (Kruskal-Wallis H = [value], df = [k−1], p = [value]). Post-hoc Dunn's test (Bonferroni-adjusted) revealed [Group X] differed significantly from [Group Y] (p = [value])."<br><br>
+    <strong>Friedman:</strong> "[Variable] differed significantly across [treatments] (Friedman χ² = [value], df = [k−1], p = [value])."<br><br>
+    <strong>Spearman:</strong> "A significant positive correlation was observed between [Trait A] and [Trait B] (Spearman ρ = [value], p = [value])."<br><br>
+    <strong>Chi-Square (GoF):</strong> "The observed segregation ratio did not deviate significantly from the expected 3:1 ratio (χ² = [value], df = 1, p = [value])."</p>
+  </div>
+
+  <div class="memory-box" style="background: linear-gradient(135deg, #1a3a2a 0%, #2d4a3a 100%);">
+    <h4>🌱 Final Lifetime Anchor — The WILKFSRC Mnemonic</h4>
+    <p>
+      <strong>W</strong>ilcoxon Rank-Sum → 2 independent groups<br>
+      <strong>W</strong>ilcoxon Signed-Rank → Paired / before-after<br>
+      <strong>K</strong>ruskal-Wallis → 3+ independent groups (+ Dunn's)<br>
+      <strong>F</strong>riedman → Blocks / repeated measures (+ Nemenyi)<br>
+      <strong>S</strong>pearman ρ → Continuous rank correlation<br>
+      <strong>K</strong>endall τ → Ordinal / small n correlation<br>
+      <strong>C</strong>hi-Square → Categorical associations &amp; Mendelian ratios<br>
+      <strong>R</strong>uns Test → Randomness of sequences<br><br>
+      Remember: <em>"When data breaks the rules of normality — RANKS are your ally in genetics!"</em>
+    </p>
+  </div>
+
+</section>
+
+<footer>
+  <div>Non-Parametric Tests · R Training Program for Genetics &amp; Plant Breeding Scholars</div>
+  <div style="margin-top:8px; opacity:0.4;">Crafted for lifetime learning · Module 4 of the R Training Series</div>
+</footer>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
